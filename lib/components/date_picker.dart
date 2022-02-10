@@ -8,16 +8,14 @@ class DatePicker extends StatelessWidget {
   final DateTime? selectedDate;
   final Function(DateTime?) onDateChanged;
   final String text;
-  final String buttonText;
   final bool withClearButton;
 
-  DatePicker({
+  const DatePicker({
     Key? key,
     this.selectedDate,
     this.withClearButton = true,
     required this.onDateChanged,
     required this.text,
-    required this.buttonText,
   }) : super(key: key);
 
   _showDatePicker(BuildContext context) {
@@ -35,6 +33,44 @@ class DatePicker extends StatelessWidget {
 
   _clearValue() {
     onDateChanged(null);
+  }
+
+  _buildActionButtons(BuildContext context) {
+    var builder = [
+      Expanded(
+        child: Text(
+          selectedDate == null
+              ? "Não há $text"
+              : "$text: \n${DateFormat("dd/MM/y").format(selectedDate!)}",
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      IconButton(
+        onPressed: () => _showDatePicker(context),
+        icon: Icon(
+          Icons.date_range_outlined,
+          size: 30.0,
+          color: Theme.of(context).primaryColor,
+        ),
+      ),
+    ];
+
+    if (withClearButton) {
+      builder.add(
+        IconButton(
+          onPressed: () => _clearValue(),
+          icon: const Icon(
+            Icons.clear,
+            size: 30.0,
+            color: Colors.red,
+          ),
+        ),
+      );
+    }
+
+    return builder;
   }
 
   @override
@@ -61,34 +97,7 @@ class DatePicker extends StatelessWidget {
               ),
             ),
             child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    selectedDate == null
-                        ? "Não há $text"
-                        : "$text: \n${DateFormat("dd/MM/y").format(selectedDate!)}",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => _showDatePicker(context),
-                  icon: Icon(
-                    Icons.date_range_outlined,
-                    size: 30.0,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => _clearValue(),
-                  icon: const Icon(
-                    Icons.clear,
-                    size: 30.0,
-                    color: Colors.red,
-                  ),
-                )
-              ],
+              children: _buildActionButtons(context),
             ),
           );
   }

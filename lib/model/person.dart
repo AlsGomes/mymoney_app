@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 
 class Person {
-  String code;
-  String name;
+  final String code;
+  final String name;
 
   Person({
     required this.code,

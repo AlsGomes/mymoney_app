@@ -1,6 +1,6 @@
 class Category {
-  String code;
-  String name;
+  final String code;
+  final String name;
 
   Category({
     required this.code,
