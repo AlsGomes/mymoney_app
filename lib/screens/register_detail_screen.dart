@@ -1,11 +1,10 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mymoney_app/components/date_picker.dart';
 import 'package:mymoney_app/model/category.dart';
 import 'package:mymoney_app/model/person.dart';
 import 'package:mymoney_app/model/register.dart';
+import 'package:mymoney_app/model/register_list.dart';
+import 'package:provider/provider.dart';
 
 class RegisterDetailScreen extends StatefulWidget {
   const RegisterDetailScreen({Key? key}) : super(key: key);
@@ -55,25 +54,24 @@ class _RegisterDetailScreenState extends State<RegisterDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _formData = Map<String, dynamic>();
 
+  var switchControl = [false];
+  Person? person;
+  Category? category;
+
   _submitForm() {
     final isValid = _formKey.currentState?.validate() ?? false;
 
     if (!isValid) return;
 
     _formKey.currentState?.save();
-    final register = Register(
-      code: Random().nextDouble().toString(),
-      description: _formData['description'],
-      dueDate: DateFormat("dd/MM/yyyy").parse(_formData['dueDate']),
-      paymentDate: _formData['paymentDate'] != ''
-          ? DateFormat("dd/MM/yyyy").parse(_formData['paymentDate'])
-          : null,
-      obs: _formData['obs'],
-      category: _formData['category'],
-      person: _formData['person'],
-      value: _formData['value'],
-      type: switchControl[0] ? "INCOME" : "EXPENSE",
-    );
+
+    _formData['type'] = switchControl[0] ? "INCOME" : "EXPENSE";
+
+    Provider.of<RegisterList>(
+      context,
+      listen: false,
+    ).saveItemFromData(_formData);
+    Navigator.of(context).pop();
   }
 
   _showDatePicker(BuildContext context, String property) async {
@@ -95,38 +93,42 @@ class _RegisterDetailScreenState extends State<RegisterDetailScreen> {
     }
   }
 
-  // _fillFormData(Register register) {
-  //   _formData['type'] = register.type;
-  //   _formData['description'] = register.description;
-  //   _formData['value'] = register.value;
-  //   _formData['dueDate'] = register.dueDate;
-  //   _formData['paymentDate'] = register.paymentDate;
-  //   _formData['obs'] = register.obs;
-  //   _formData['person'] = register.person;
-  //   _formData['category'] = register.category;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-  //   dueDateEdittingController.text = _formData['dueDate']?.toIso8601String();
-  // }
-  var switchControl = [false];
-  // bool switchControl = false;
+    if (_formData.isEmpty) {
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+
+      if (arguments != null) {
+        final register = arguments as Register;
+        _formData['code'] = register.code;
+        _formData['type'] = register.type;
+        _formData['description'] = register.description;
+        _formData['value'] = register.value;
+        _formData['dueDate'] = register.dueDate;
+        _formData['paymentDate'] = register.paymentDate;
+        _formData['obs'] = register.obs;
+        _formData['person'] = register.person;
+        _formData['category'] = register.category;
+
+        register.type == "INCOME" ? switchControl[0] = true : false;
+        person = persons.firstWhere((p) => p.code == register.person.code);
+        category =
+            categories.firstWhere((c) => c.code == register.category.code);
+
+        dueDateEdittingController.text =
+            DateFormat("dd/MM/yyyy").format(register.dueDate);
+
+        paymentDateEdittingController.text = register.paymentDate != null
+            ? DateFormat("dd/MM/yyyy").format(register.paymentDate!)
+            : '';
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // var arguments = ModalRoute.of(context)?.settings.arguments;
-
-    // var register = arguments != null ? arguments as Register : null;
-    // bool isEditting = false;
-    // if (register != null) isEditting = true;
-    // if (isEditting) _fillFormData(register!);
-
-    // Person? person = register == null
-    //     ? null
-    //     : persons.firstWhere((p) => p.code == register.person.code);
-
-    // Category? category = register == null
-    //     ? null
-    //     : categories.firstWhere((c) => c.code == register.category.code);
-
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -137,10 +139,8 @@ class _RegisterDetailScreenState extends State<RegisterDetailScreen> {
             ),
           )
         ],
-        // title: Text(register != null && register.type == 'EXPENSE'
-        //     ? "Despesa"
-        //     : "Receita"),
-        title: Text("Novo Registro"),
+        title: Text(
+            _formData['code'] != null ? "Editando Registro" : "Novo Registro"),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -151,21 +151,6 @@ class _RegisterDetailScreenState extends State<RegisterDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.start,
-                //   children: [
-                //     Text(switchControl ? "Receita" : "Despesa"),
-                //     Switch(
-                //       onChanged: (value) {
-                //         setState(() {
-                //           print(value);
-                //           switchControl = value;
-                //         });
-                //       },
-                //       value: switchControl,
-                //     ),
-                //   ],
-                // ),
                 Row(
                   children: [
                     ToggleButtons(
@@ -200,7 +185,7 @@ class _RegisterDetailScreenState extends State<RegisterDetailScreen> {
                   ],
                 ),
                 TextFormField(
-                  initialValue: _formData['description'],
+                  initialValue: _formData['description'] ?? '',
                   decoration: const InputDecoration(labelText: 'Descrição'),
                   textInputAction: TextInputAction.next,
                   onSaved: (_description) => {
@@ -244,12 +229,8 @@ class _RegisterDetailScreenState extends State<RegisterDetailScreen> {
                 DropdownButtonFormField<Person>(
                   decoration: const InputDecoration(labelText: "Pessoa"),
                   elevation: 16,
-                  // value: person,
-                  onChanged: (newValue) {
-                    // setState(() {
-                    //   person = newValue!;
-                    // });
-                  },
+                  value: person,
+                  onChanged: (newValue) {},
                   onSaved: (newValue) => _formData['person'] = newValue,
                   items: persons.map((Person value) {
                     return DropdownMenuItem<Person>(
@@ -264,12 +245,8 @@ class _RegisterDetailScreenState extends State<RegisterDetailScreen> {
                 DropdownButtonFormField<Category>(
                   decoration: const InputDecoration(labelText: "Categoria"),
                   elevation: 16,
-                  // value: category,
-                  onChanged: (newValue) {
-                    //   setState(() {
-                    //     category = newValue!;
-                    //   });
-                  },
+                  value: category,
+                  onChanged: (newValue) {},
                   onSaved: (newValue) => _formData['category'] = newValue,
                   items: categories.map((Category value) {
                     return DropdownMenuItem<Category>(
@@ -313,7 +290,7 @@ class _RegisterDetailScreenState extends State<RegisterDetailScreen> {
                   },
                 ),
                 TextFormField(
-                  initialValue: _formData['obs'],
+                  initialValue: _formData['obs'] ?? '',
                   textInputAction: TextInputAction.done,
                   decoration: const InputDecoration(labelText: 'Observações'),
                   keyboardType: TextInputType.multiline,
@@ -325,8 +302,7 @@ class _RegisterDetailScreenState extends State<RegisterDetailScreen> {
                     var input = _input ?? '';
                     input = input.trim();
 
-                    if (input.isEmpty) return "Preenchimento obrigatório";
-                    if (input.length < 5) {
+                    if (input.isNotEmpty && input.length < 5) {
                       return "Deve conter no mínimo 5 caracteres";
                     }
 
