@@ -141,4 +141,9 @@ class RegisterList with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void removeItem(Register item) {
+    _items.remove(item);
+    notifyListeners();
+  }
 }
