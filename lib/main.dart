@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mymoney_app/model/register_list.dart';
 import 'package:mymoney_app/routes/app_routes.dart';
 import 'package:mymoney_app/screens/register_detail_screen.dart';
-import 'package:mymoney_app/screens/registers_screen.dart';
+import 'package:mymoney_app/screens/tabs_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
         ),
         debugShowCheckedModeBanner: false,
         routes: {
-          AppRoutes.registersScreen: (ctx) => RegistersScreen(),
+          AppRoutes.home: (ctx) => TabsScreen(),
           AppRoutes.registerDetailScreen: (ctx) => RegisterDetailScreen(),
         },
       ),

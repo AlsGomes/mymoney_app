@@ -1,4 +1,4 @@
 class AppRoutes {
-  static const registersScreen = "/";
+  static const home = "/";
   static const registerDetailScreen = "registerDetailScreen";
 }
